@@ -6,3 +6,6 @@ python-multipart
 alembic
 psycopg2-binary
 python-dotenv
+passlib[bcrypt]
+python-jose
+bcrypt==3.2.2

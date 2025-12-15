@@ -1,21 +1,102 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="px-4 py-6 sm:px-0">
-    <div class="mb-6">
-        <h1 class="text-3xl font-bold text-slate-900">Planificación</h1>
-        <p class="mt-2 text-sm text-slate-600">Calendario y tareas de seguimiento.</p>
+<div class="px-4 py-6 sm:px-0 h-full flex flex-col">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-900">Planificación</h1>
+            <p class="mt-2 text-sm text-slate-600">Tablero de tareas del equipo.</p>
+        </div>
+
+        <!-- Button trigger modal -->
+        <button onclick="document.getElementById('newTaskModal').classList.remove('hidden')"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+            + Nueva Tarea
+        </button>
     </div>
 
-    <div
-        class="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg p-10 text-center transition-all hover:shadow-md">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-            aria-hidden="true">
-            <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay tareas pendientes</h3>
-        <p class="mt-1 text-sm text-gray-500">Comienza planificando una actividad de seguimiento.</p>
+    <!-- Kanban Board -->
+    <div class="flex-grow flex space-x-4 overflow-x-auto pb-4">
+
+        <!-- Column TODO -->
+        <div class="flex-1 min-w-[300px] bg-slate-100 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-slate-700 uppercase tracking-wider mb-4">Pendiente</h3>
+            <div class="space-y-3">
+                {% for task in tasks if task.status == 'todo' %}
+                {% include 'components/task_card.html' %}
+                {% else %}
+                <p class="text-sm text-slate-400 text-center italic">Sin tareas pendientes</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Column IN PROGRESS -->
+        <div class="flex-1 min-w-[300px] bg-blue-50 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-blue-700 uppercase tracking-wider mb-4">En Progreso</h3>
+            <div class="space-y-3">
+                {% for task in tasks if task.status == 'in_progress' %}
+                {% include 'components/task_card.html' %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Column DONE -->
+        <div class="flex-1 min-w-[300px] bg-green-50 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-green-700 uppercase tracking-wider mb-4">Completado</h3>
+            <div class="space-y-3">
+                {% for task in tasks if task.status == 'done' %}
+                {% include 'components/task_card.html' %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Tarea -->
+<div id="newTaskModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Crear Nueva Tarea</h3>
+        <form action="/tasks/create" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Título</label>
+                    <input type="text" name="title" required
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Descripción</label>
+                    <textarea name="description" rows="3"
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Vincular a Prospecto (Opcional)</label>
+                    <select name="prospect_id"
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">-- Ninguno --</option>
+                        {% for p in prospects %}
+                        <option value="{{ p.id }}">{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Asignar a (Control + Click para
+                        múltiple)</label>
+                    <select name="assignee_ids" multiple
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm h-24">
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('newTaskModal').classList.add('hidden')"
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancelar</button>
+                <button type="submit"
+                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">Crear
+                    Tarea</button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

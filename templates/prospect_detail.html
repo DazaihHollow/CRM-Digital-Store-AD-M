@@ -1,0 +1,113 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <!-- Breadcrumb simple -->
+    <nav class="flex mb-4" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+                <a href="/prospectos" class="text-sm font-medium text-slate-500 hover:text-slate-700">Prospectos</a>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 text-slate-400" fill="currentColor" viewBox="0 0 20 20"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="ml-1 text-sm font-medium text-slate-800 md:ml-2">{{ prospect.name }}</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Información del Prospecto</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Detalles y seguimiento.</p>
+            </div>
+            <!-- Delete Button -->
+            <form action="/prospectos/{{ prospect.id }}/delete" method="POST"
+                onsubmit="return confirm('¿Estás seguro de eliminar este prospecto?');">
+                <button type="submit"
+                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none transition ease-in-out duration-150">
+                    Eliminar
+                </button>
+            </form>
+        </div>
+
+        <!-- Contenido Principal: Edición a la izquierda, Tabs/Historial a la derecha (futuro) -->
+        <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+            <form action="/prospectos/{{ prospect.id }}/update" method="POST">
+                <dl class="text-gray-900 sm:divide-y sm:divide-gray-200">
+                    <!-- Nombre -->
+                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Nombre Empresa</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            <input type="text" name="name" value="{{ prospect.name }}"
+                                class="border-gray-300 rounded shadow-sm w-full">
+                        </dd>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Estado</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            <select name="status"
+                                class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="Nuevo" {% if prospect.status=='Nuevo' %}selected{% endif %}>Nuevo
+                                </option>
+                                <option value="Contactado" {% if prospect.status=='Contactado' %}selected{% endif %}>
+                                    Contactado</option>
+                                <option value="Interesado" {% if prospect.status=='Interesado' %}selected{% endif %}>
+                                    Interesado</option>
+                                <option value="Cliente" {% if prospect.status=='Cliente' %}selected{% endif %}>Cliente
+                                </option>
+                                <option value="Perdido" {% if prospect.status=='Perdido' %}selected{% endif %}>Perdido
+                                </option>
+                            </select>
+                        </dd>
+                    </div>
+
+                    <!-- Datos de Contacto -->
+                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Información de Contacto</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="text" name="contact_name" value="{{ prospect.contact_name or '' }}"
+                                    placeholder="Nombre Contacto" class="border-gray-300 rounded shadow-sm w-full mb-2">
+                                <input type="text" name="phone" value="{{ prospect.phone or '' }}"
+                                    placeholder="Teléfono" class="border-gray-300 rounded shadow-sm w-full mb-2">
+                            </div>
+                            <input type="email" name="email" value="{{ prospect.email or '' }}" placeholder="Email"
+                                class="border-gray-300 rounded shadow-sm w-full">
+                        </dd>
+                    </div>
+
+                    <!-- Rubro y Dirección -->
+                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Detalles Adicionales</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                            <input type="text" name="industry" value="{{ prospect.industry or '' }}" placeholder="Rubro"
+                                class="border-gray-300 rounded shadow-sm w-1/2 mb-2">
+                            <textarea name="address" rows="3" placeholder="Dirección"
+                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md">{{ prospect.address or '' }}</textarea>
+                        </dd>
+                    </div>
+                </dl>
+
+                <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                    <button type="submit"
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Aquí iría la lista de tareas viculadas (Próximo paso) -->
+</div>
+{% endblock %}

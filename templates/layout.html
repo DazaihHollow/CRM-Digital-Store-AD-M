@@ -43,7 +43,18 @@
                     </div>
                 </div>
                 <div>
-                    <div class="h-8 w-8 rounded-full bg-accent flex items-center justify-center text-white font-bold text-sm">U</div>
+                    {% if user %}
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-slate-200">Hola, {{ user.username }}</span>
+                        <a href="/logout" class="text-sm text-slate-300 hover:text-white">Salir</a>
+                        <div class="h-8 w-8 rounded-full bg-accent flex items-center justify-center text-white font-bold text-sm">
+                            {{ user.username[0] | upper }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Caso no logueado (aunque las rutas estan protegidas, por seguridad) -->
+                     <a href="/login" class="text-sm text-white">Iniciar Sesión</a>
+                    {% endif %}
                 </div>
             </div>
         </div>

@@ -80,8 +80,15 @@
                             {% for prospect in prospects %}
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ prospect.name }}</div>
+                                    <div class="text-sm font-medium text-gray-900">
+                                        <a href="/prospectos/{{ prospect.id }}"
+                                            class="hover:text-blue-600 font-bold underline decoration-dotted">
+                                            {{ prospect.name }}
+                                        </a>
+                                    </div>
                                     <div class="text-sm text-gray-500">{{ prospect.email or 'Sin correo' }}</div>
+                                    <div class="text-xs text-slate-400 mt-1">Registrado por: {{
+                                        prospect.creator.username }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ prospect.industry or '-' }}
