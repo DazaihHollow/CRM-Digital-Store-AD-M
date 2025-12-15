@@ -1,0 +1,117 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-900">Prospectos</h1>
+            <p class="mt-2 text-sm text-slate-600">Gestiona las empresas objetivo.</p>
+        </div>
+        <!-- Modal Trigger (Simple implementation for now: Toggle visibility via JS or separate page. Keeping it simple as a form below) -->
+    </div>
+
+    <!-- Formulario rápido -->
+    <div class="bg-white shadow sm:rounded-lg mb-8 p-6">
+        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Registrar Nuevo Prospecto</h3>
+        <form action="/prospectos/nuevo" method="POST" class="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-8">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Nombre Empresa</label>
+                <div class="mt-1">
+                    <input type="text" name="name" id="name" required
+                        class="py-2 px-3 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border text-black focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            <div>
+                <label for="industry" class="block text-sm font-medium text-gray-700">Rubro</label>
+                <div class="mt-1">
+                    <input type="text" name="industry" id="industry"
+                        class="py-2 px-3 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border text-black focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            <div>
+                <label for="contact_name" class="block text-sm font-medium text-gray-700">Contacto</label>
+                <div class="mt-1">
+                    <input type="text" name="contact_name" id="contact_name"
+                        class="py-2 px-3 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border text-black focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">Teléfono</label>
+                <div class="mt-1">
+                    <input type="text" name="phone" id="phone"
+                        class="py-2 px-3 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border text-black focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            <div class="sm:col-span-2">
+                <button type="submit"
+                    class="w-full inline-flex items-center justify-center px-6 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Guardar Prospecto
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla -->
+    <div class="flex flex-col">
+        <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Empresa</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Rubro</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Contacto</th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Estado</th>
+                                <th scope="col" class="relative px-6 py-3">
+                                    <span class="sr-only">Editar</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for prospect in prospects %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ prospect.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ prospect.email or 'Sin correo' }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ prospect.industry or '-' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ prospect.contact_name or '-' }}
+                                    {% if prospect.phone %}<div class="text-xs">{{ prospect.phone }}</div>{% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        {{ prospect.status }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">Editar</a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500">
+                                    No hay prospectos registrados. ¡Agrega el primero arriba!
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

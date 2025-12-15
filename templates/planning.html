@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-slate-900">Planificación</h1>
+        <p class="mt-2 text-sm text-slate-600">Calendario y tareas de seguimiento.</p>
+    </div>
+
+    <div
+        class="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg p-10 text-center transition-all hover:shadow-md">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            aria-hidden="true">
+            <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay tareas pendientes</h3>
+        <p class="mt-1 text-sm text-gray-500">Comienza planificando una actividad de seguimiento.</p>
+    </div>
+</div>
+{% endblock %}
