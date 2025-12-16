@@ -25,6 +25,14 @@ async def startup_event():
     except Exception as e:
         print(f"CRITICAL ERROR: Failed to create tables. {e}")
 
+# Manejador de errores para redirigir a login en lugar de mostrar JSON
+from fastapi.exceptions import HTTPException
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+        return RedirectResponse(url="/login", status_code=303)
+    return HTMLResponse(content=f"<h1>Error {exc.status_code}</h1><p>{exc.detail}</p>", status_code=exc.status_code)
+
 # Configuración de rutas
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
