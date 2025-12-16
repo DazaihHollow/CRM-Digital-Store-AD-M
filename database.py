@@ -13,7 +13,14 @@ if not DATABASE_URL:
     DATABASE_URL = os.getenv("POSTGRES_URL")
 
 if not DATABASE_URL:
+    # FALLBACK DIAGNOSTIC
+    print("WARNING: No DATABASE_URL or POSTGRES_URL found. Falling back to SQLite.")
+    # On Vercel, root is read-only. We must use /tmp if we really want to try SQLite (data will be lost)
+    if os.environ.get("VERCEL") or os.getcwd().startswith("/var/task"):
+        print("ERROR: Running on Vercel with SQLite (ReadOnly FS). This will likely crash.")
     DATABASE_URL = "sqlite:///./crm.db"
+else:
+    print(f"INFO: Database URL found (starts with {DATABASE_URL[:10]}...)")
 
 # Fix para SQLAlchemy que removió soporte para 'postgres://' (Vercel lo usa por defecto)
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):

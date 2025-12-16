@@ -13,7 +13,14 @@ from database import engine, get_db
 # NOTA: En producción usar Alembic.
 # IMPORTANTE: Ya NO borramos los datos al iniciar.
 # models.Base.metadata.drop_all(bind=engine)
-models.Base.metadata.create_all(bind=engine)
+try:
+    print("INFO: Attempting to create tables...")
+    models.Base.metadata.create_all(bind=engine)
+    print("INFO: Tables created successfully.")
+except Exception as e:
+    print(f"CRITICAL ERROR: Failed to create tables. {e}")
+    # No re-lanzamos el error para permitir que la app intente iniciar y muestre logs
+
 
 app = FastAPI(title="CRM Agencia")
 
