@@ -1,0 +1,25 @@
+<div class="bg-white p-3 rounded shadow-sm border border-slate-200">
+    <div class="flex justify-between items-start mb-2">
+        <span class="text-sm font-medium text-slate-800">{{ sub.title }}</span>
+        <form action="/subtasks/{{ sub.id }}/delete" method="POST" onsubmit="return confirm('x');">
+            <button type="submit" class="text-slate-300 hover:text-red-500 font-bold leading-none">&times;</button>
+        </form>
+    </div>
+
+    <div class="text-[10px] text-slate-500 mb-2 truncate">
+        ↳ {{ sub.parent_task.title }}
+    </div>
+
+    <!-- Mini Controles de Estado -->
+    <form action="/subtasks/{{ sub.id }}/update_status" method="POST" class="flex space-x-1">
+        <button type="submit" name="status" value="todo"
+            class="w-2 h-2 rounded-full bg-slate-200 hover:bg-slate-400 focus:ring-1 {% if sub.status=='todo' %}ring-2 ring-slate-500{% endif %}"
+            title="Pendiente"></button>
+        <button type="submit" name="status" value="in_progress"
+            class="w-2 h-2 rounded-full bg-indigo-200 hover:bg-indigo-400 focus:ring-1 {% if sub.status=='in_progress' %}ring-2 ring-indigo-500{% endif %}"
+            title="En Marcha"></button>
+        <button type="submit" name="status" value="done"
+            class="w-2 h-2 rounded-full bg-emerald-200 hover:bg-emerald-400 focus:ring-1 {% if sub.status=='done' %}ring-2 ring-emerald-500{% endif %}"
+            title="Listo"></button>
+    </form>
+</div>

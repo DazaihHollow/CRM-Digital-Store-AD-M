@@ -88,6 +88,19 @@
                         {% endfor %}
                     </select>
                 </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Inicio (Opcional)</label>
+                        <input type="date" name="start_date"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Fin (Opcional)</label>
+                        <input type="date" name="end_date"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
             </div>
             <div class="mt-5 flex justify-end space-x-3">
                 <button type="button" onclick="document.getElementById('newTaskModal').classList.add('hidden')"
@@ -99,4 +112,36 @@
         </form>
     </div>
 </div>
+</div>
+
+<script>
+    function openTaskModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    function closeTaskModal(event, modalId) {
+        // Cierra solo si clickeas el backdrop (id == modalId)
+        if (event.target.id === modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+    }
+
+    function closeTaskModalById(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    // Auto-open modal if param exists
+    document.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskId = urlParams.get('task_id');
+        if (taskId) {
+            const modal = document.getElementById('task-modal-' + taskId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                // Limpiar URL para no reabrir al refrescar (opcional pero recomendado)
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+    });
+</script>
 {% endblock %}

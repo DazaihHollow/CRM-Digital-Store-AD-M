@@ -68,7 +68,8 @@ class Task(Base):
     title = Column(String, index=True)
     description = Column(Text, nullable=True)
     status = Column(String, default=TaskStatus.TODO.value) # todo, in_progress, done
-    due_date = Column(DateTime, nullable=True)
+    start_date = Column(DateTime, nullable=True)
+    end_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     prospect_id = Column(Integer, ForeignKey("prospects.id"), nullable=True)
@@ -76,3 +77,20 @@ class Task(Base):
     # Relaciones
     prospect = relationship("Prospect", back_populates="tasks")
     assignees = relationship("User", secondary=task_assignments, back_populates="assigned_tasks")
+    subtasks = relationship("SubTask", back_populates="parent_task", cascade="all, delete-orphan")
+
+class SubTask(Base):
+    __tablename__ = "subtasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    status = Column(String, default="todo") # todo, in_progress, done
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # FKs
+    user_id = Column(Integer, ForeignKey("users.id")) # Es personal del usuario
+    task_id = Column(Integer, ForeignKey("tasks.id")) # Vinculada a una tarea padre (asignada)
+    
+    # Relaciones
+    user = relationship("User") # No necesitamos back_populates estricto si no lo usamos
+    parent_task = relationship("Task", back_populates="subtasks")

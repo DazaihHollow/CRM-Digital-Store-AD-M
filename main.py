@@ -4,14 +4,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from pathlib import Path
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import models
 import auth
 from database import engine, get_db
 
-# NOTA: En producción usar Alembic. Aquí dropeamos todo para aplicar cambios rápido.
-models.Base.metadata.drop_all(bind=engine)
+# NOTA: En producción usar Alembic.
+# IMPORTANTE: Ya NO borramos los datos al iniciar.
+# models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="CRM Agencia")
@@ -61,6 +62,7 @@ async def login(
 
 @app.get("/register", response_class=HTMLResponse)
 async def register_page(request: Request):
+
     return templates.TemplateResponse("register.html", {"request": request})
 
 @app.post("/register", response_class=HTMLResponse)
@@ -87,6 +89,91 @@ async def logout(response: Response):
     resp = RedirectResponse(url="/login", status_code=303)
     resp.delete_cookie("access_token")
     return resp
+
+@app.get("/profile", response_class=HTMLResponse)
+async def user_profile(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    # Traer tareas asignadas
+    assigned_tasks = db.query(models.Task).filter(
+        models.Task.assignees.any(id=current_user.id)
+    ).all()
+    
+    # Traer Subtareas personales
+    my_subtasks = db.query(models.SubTask).filter(models.SubTask.user_id == current_user.id).all()
+
+    return templates.TemplateResponse(
+        "profile.html", 
+        {
+            "request": request,
+            "title": "Mi Perfil",
+            "active_tab": "profile",
+            "user": current_user,
+            "tasks": assigned_tasks,
+            "subtasks": my_subtasks
+        }
+    )
+
+# --- Subtareas Endpoints ---
+@app.post("/subtasks/create")
+async def create_subtask(
+    title: str = Form(...),
+    task_id: int = Form(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    new_sub = models.SubTask(
+        title=title,
+        task_id=task_id,
+        user_id=current_user.id,
+        status="todo"
+    )
+    db.add(new_sub)
+    db.commit()
+    return RedirectResponse(url="/profile", status_code=303)
+
+@app.post("/subtasks/{sub_id}/update_status")
+async def update_subtask_status(
+    sub_id: int,
+    status: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    sub = db.query(models.SubTask).filter(models.SubTask.id == sub_id, models.SubTask.user_id == current_user.id).first()
+    if sub:
+        sub.status = status
+        db.commit()
+    return RedirectResponse(url="/profile", status_code=303)
+
+@app.post("/subtasks/{sub_id}/delete")
+async def delete_subtask(
+    sub_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    sub = db.query(models.SubTask).filter(models.SubTask.id == sub_id, models.SubTask.user_id == current_user.id).first()
+    if sub:
+        db.delete(sub)
+        db.commit()
+    return RedirectResponse(url="/profile", status_code=303)
+
+@app.post("/profile/update")
+async def update_profile(
+    email: str = Form(None),
+    password: str = Form(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    if email:
+        current_user.email = email
+    if password:
+        current_user.hashed_password = auth.get_password_hash(password)
+        
+    db.commit()
+    return RedirectResponse(url="/profile", status_code=303)
+
 
 # --- RUTAS PROTEGIDAS ---
 
@@ -171,6 +258,9 @@ async def prospect_detail(
     if not prospect:
         # Podríamos retornar un 404 custom
         return RedirectResponse(url="/prospectos")
+    
+    # Necesitamos usuarios para el modal de nueva tarea
+    users = db.query(models.User).all()
         
     return templates.TemplateResponse(
         "prospect_detail.html", 
@@ -179,7 +269,8 @@ async def prospect_detail(
             "title": f"{prospect.name} - Detalle",
             "active_tab": "prospects",
             "user": current_user,
-            "prospect": prospect
+            "prospect": prospect,
+            "users": users
         }
     )
 
@@ -247,33 +338,77 @@ async def planning_view(
         }
     )
 
-@app.post("/tasks/create")
-async def create_task(
-    title: str = Form(...),
-    description: str = Form(None),
-    prospect_id: int = Form(None),
-    assignee_ids: list[int] = Form([]), # IDs de usuarios asignados
+@app.get("/calendar", response_class=HTMLResponse)
+async def calendar_view(
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_active_user)
 ):
+    # Traer tareas que tengan fecha de fin para mostrarlas
+    tasks = db.query(models.Task).filter(models.Task.end_date != None).all()
+    return templates.TemplateResponse(
+        "calendar.html", 
+        {
+            "request": request,
+            "title": "Calendario",
+            "active_tab": "calendar",
+            "user": current_user,
+            "tasks_with_dates": tasks
+        }
+    )
+
+@app.post("/tasks/create")
+async def create_task(
+    request: Request,
+    title: str = Form(...),
+    description: str = Form(None),
+    prospect_id: int = Form(None),
+    start_date: str = Form(None), # Recibimos como string "YYYY-MM-DD"
+    end_date: str = Form(None),
+    assignee_ids: list[int] = Form([]),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    # Convertir fechas si existen
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d") if end_date else None
+
     new_task = models.Task(
         title=title,
         description=description,
         prospect_id=prospect_id,
-        status=models.TaskStatus.TODO
+        status=models.TaskStatus.TODO,
+        start_date=start_dt,
+        end_date=end_dt
     )
     
-    # Asignar usuarios
     if assignee_ids:
         assignees = db.query(models.User).filter(models.User.id.in_(assignee_ids)).all()
         new_task.assignees = assignees
         
     db.add(new_task)
     db.commit()
+    # Redirigir a la página desde donde se llamó (referer) o default a planning
+    referer = request.headers.get("referer")
+    if referer:
+        return RedirectResponse(url=referer, status_code=303)
+    return RedirectResponse(url="/planning", status_code=303)
+
+@app.post("/tasks/{task_id}/delete")
+async def delete_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
+    if task:
+        db.delete(task)
+        db.commit()
     return RedirectResponse(url="/planning", status_code=303)
 
 @app.post("/tasks/{task_id}/update_status")
 async def update_task_status(
+    request: Request,
     task_id: int,
     status: str = Form(...),
     db: Session = Depends(get_db),
@@ -283,7 +418,46 @@ async def update_task_status(
     if task:
         task.status = status
         db.commit()
-    return RedirectResponse(url="/planning", status_code=303)
+    # Redirigir al referer para que sirva desde planning y prospect detail
+    referer = request.headers.get("referer") or "/planning"
+    return RedirectResponse(url=referer, status_code=303)
+
+@app.post("/tasks/{task_id}/update")
+async def update_task_details(
+    request: Request,
+    task_id: int,
+    title: str = Form(...),
+    description: str = Form(None),
+    start_date: str = Form(None),
+    end_date: str = Form(None),
+    assignee_ids: list[int] = Form([]),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_active_user)
+):
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
+    if task:
+        task.title = title
+        task.description = description
+        task.start_date = datetime.strptime(start_date, "%Y-%m-%d") if start_date else None
+        task.end_date = datetime.strptime(end_date, "%Y-%m-%d") if end_date else None
+        
+        # Actualizar asignados
+        # Si assignee_ids viene vacío, ¿significa borrar todos o que no se envió?
+        # En HTML forms, un select multiple vacío no envía nada. 
+        # Asumiremos que si la clave existe (incluso vacía) en el form data es intencional, 
+        # pero FastAPI Form([]) maneja esto. 
+        # Para simplificar: Siempre reemplazamos con lo que llegue.
+        if assignee_ids:
+             new_assignees = db.query(models.User).filter(models.User.id.in_(assignee_ids)).all()
+             task.assignees = new_assignees
+        else:
+             # Si llega vacío, limpiamos (desasignar a todos)
+             task.assignees = []
+
+        db.commit()
+        
+    referer = request.headers.get("referer") or "/planning"
+    return RedirectResponse(url=referer, status_code=303)
 
 if __name__ == "__main__":
     import uvicorn

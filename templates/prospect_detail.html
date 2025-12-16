@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="px-4 py-6 sm:px-0">
-    <!-- Breadcrumb simple -->
+    <!-- Breadcrumb -->
     <nav class="flex mb-4" aria-label="Breadcrumb">
         <ol class="inline-flex items-center space-x-1 md:space-x-3">
             <li class="inline-flex items-center">
@@ -10,8 +10,7 @@
             </li>
             <li aria-current="page">
                 <div class="flex items-center">
-                    <svg class="w-6 h-6 text-slate-400" fill="currentColor" viewBox="0 0 20 20"
-                        xmlns="http://www.w3.org/2000/svg">
+                    <svg class="w-6 h-6 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
                             d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                             clip-rule="evenodd"></path>
@@ -22,32 +21,40 @@
         </ol>
     </nav>
 
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center bg-slate-50 border-b border-gray-200">
             <div>
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Información del Prospecto</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Detalles y seguimiento.</p>
+                <h3 class="text-lg leading-6 font-bold text-gray-900">Información del Prospecto</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Detalles de la empresa y contacto.</p>
             </div>
-            <!-- Delete Button -->
-            <form action="/prospectos/{{ prospect.id }}/delete" method="POST"
-                onsubmit="return confirm('¿Estás seguro de eliminar este prospecto?');">
-                <button type="submit"
-                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none transition ease-in-out duration-150">
-                    Eliminar
+            <div class="flex space-x-2">
+                <!-- Botón de Edición -->
+                <button id="toggleEditBtn" onclick="toggleEditMode()"
+                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                    ✏️ Editar
                 </button>
-            </form>
+
+                <!-- Botón de Eliminar -->
+                <form action="/prospectos/{{ prospect.id }}/delete" method="POST"
+                    onsubmit="return confirm('¿Estás seguro de eliminar este prospecto?');">
+                    <button type="submit"
+                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none">
+                        🗑️ Eliminar
+                    </button>
+                </form>
+            </div>
         </div>
 
-        <!-- Contenido Principal: Edición a la izquierda, Tabs/Historial a la derecha (futuro) -->
+        <!-- Formulario (Modo Lectura por defecto, campos disabled) -->
         <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
-            <form action="/prospectos/{{ prospect.id }}/update" method="POST">
-                <dl class="text-gray-900 sm:divide-y sm:divide-gray-200">
+            <form id="prospectForm" action="/prospectos/{{ prospect.id }}/update" method="POST">
+                <dl class="sm:divide-y sm:divide-gray-200">
                     <!-- Nombre -->
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Nombre Empresa</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            <input type="text" name="name" value="{{ prospect.name }}"
-                                class="border-gray-300 rounded shadow-sm w-full">
+                            <input type="text" name="name" value="{{ prospect.name }}" disabled
+                                class="editable-field bg-transparent border-none w-full text-gray-900 focus:ring-0 p-0 disabled:bg-transparent">
                         </dd>
                     </div>
 
@@ -55,8 +62,8 @@
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Estado</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            <select name="status"
-                                class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <select name="status" disabled
+                                class="editable-field bg-transparent border-none w-full text-gray-900 focus:ring-0 p-0 disabled:opacity-100">
                                 <option value="Nuevo" {% if prospect.status=='Nuevo' %}selected{% endif %}>Nuevo
                                 </option>
                                 <option value="Contactado" {% if prospect.status=='Contactado' %}selected{% endif %}>
@@ -73,41 +80,171 @@
 
                     <!-- Datos de Contacto -->
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-gray-500">Información de Contacto</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            <div class="grid grid-cols-2 gap-4">
-                                <input type="text" name="contact_name" value="{{ prospect.contact_name or '' }}"
-                                    placeholder="Nombre Contacto" class="border-gray-300 rounded shadow-sm w-full mb-2">
-                                <input type="text" name="phone" value="{{ prospect.phone or '' }}"
-                                    placeholder="Teléfono" class="border-gray-300 rounded shadow-sm w-full mb-2">
-                            </div>
-                            <input type="email" name="email" value="{{ prospect.email or '' }}" placeholder="Email"
-                                class="border-gray-300 rounded shadow-sm w-full">
+                        <dt class="text-sm font-medium text-gray-500">Contacto</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 space-y-2">
+                            <input type="text" name="contact_name" value="{{ prospect.contact_name or '' }}" disabled
+                                placeholder="Nombre Contacto"
+                                class="editable-field block w-full bg-transparent border-none p-0 focus:ring-0 disabled:bg-transparent">
+                            <input type="text" name="phone" value="{{ prospect.phone or '' }}" disabled
+                                placeholder="Teléfono"
+                                class="editable-field block w-full bg-transparent border-none p-0 focus:ring-0 disabled:bg-transparent">
+                            <input type="email" name="email" value="{{ prospect.email or '' }}" disabled
+                                placeholder="Email"
+                                class="editable-field block w-full bg-transparent border-none p-0 focus:ring-0 disabled:bg-transparent">
                         </dd>
                     </div>
 
                     <!-- Rubro y Dirección -->
                     <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Detalles Adicionales</dt>
-                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                            <input type="text" name="industry" value="{{ prospect.industry or '' }}" placeholder="Rubro"
-                                class="border-gray-300 rounded shadow-sm w-1/2 mb-2">
-                            <textarea name="address" rows="3" placeholder="Dirección"
-                                class="shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md">{{ prospect.address or '' }}</textarea>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 space-y-2">
+                            <input type="text" name="industry" value="{{ prospect.industry or '' }}" disabled
+                                placeholder="Rubro"
+                                class="editable-field block w-full bg-transparent border-none p-0 focus:ring-0 disabled:bg-transparent">
+                            <textarea name="address" rows="2" disabled placeholder="Dirección"
+                                class="editable-field block w-full bg-transparent border-none p-0 focus:ring-0 disabled:bg-transparent resize-none">{{ prospect.address or '' }}</textarea>
                         </dd>
                     </div>
                 </dl>
 
-                <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
+                <!-- Botón Guardar (Oculto por defecto) -->
+                <div id="saveBtnContainer"
+                    class="hidden px-4 py-3 bg-gray-50 text-right sm:px-6 border-t border-gray-200">
                     <button type="submit"
                         class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Guardar Cambios
+                    </button>
+                    <button type="button" onclick="cancelEditMode()"
+                        class="ml-2 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                        Cancelar
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Aquí iría la lista de tareas viculadas (Próximo paso) -->
+    <!-- Sección de Tareas (Kanban Integrado) -->
+    <div class="mt-8">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-900">Tablero de Tareas</h3>
+            <button onclick="document.getElementById('newLinkedTaskModal').classList.remove('hidden')"
+                class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                + Nueva Tarea
+            </button>
+        </div>
+
+        <div class="flex space-x-4 overflow-x-auto pb-4">
+            <!-- Column TODO -->
+            <div class="flex-1 min-w-[250px] bg-slate-100 rounded-lg p-3">
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Pendiente</h4>
+                <div class="space-y-3">
+                    {% for task in prospect.tasks if task.status == 'todo' %}
+                    {% include 'components/task_card.html' %}
+                    {% else %}
+                    <p class="text-xs text-slate-400 italic text-center py-2">Nada pendiente</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Column IN PROGRESS -->
+            <div class="flex-1 min-w-[250px] bg-blue-50 rounded-lg p-3">
+                <h4 class="text-xs font-bold text-blue-500 uppercase tracking-widest mb-3">En Progreso</h4>
+                <div class="space-y-3">
+                    {% for task in prospect.tasks if task.status == 'in_progress' %}
+                    {% include 'components/task_card.html' %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Column DONE -->
+            <div class="flex-1 min-w-[250px] bg-green-50 rounded-lg p-3">
+                <h4 class="text-xs font-bold text-green-500 uppercase tracking-widest mb-3">Completado</h4>
+                <div class="space-y-3">
+                    {% for task in prospect.tasks if task.status == 'done' %}
+                    {% include 'components/task_card.html' %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Modal Nueva Tarea Vinculada -->
+<div id="newLinkedTaskModal"
+    class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Nueva Tarea para {{ prospect.name }}</h3>
+        <form action="/tasks/create" method="POST">
+            <!-- ID del prospecto oculto -->
+            <input type="hidden" name="prospect_id" value="{{ prospect.id }}">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Título</label>
+                    <input type="text" name="title" required
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Descripción</label>
+                    <textarea name="description" rows="3"
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                </div>
+                <!-- Asignación -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Asignar a</label>
+                    <!-- Necesitamos pasar la lista de usuarios al template -->
+                    <!-- NOTA: Como 'users' no se pasa por defecto a prospect_detail, debemos asumir que el backend lo envíe o usar una solución simple. 
+                         Por ahora, enviaré la lista de usuarios desde el backend. -->
+                    <select name="assignee_ids" multiple
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm h-20">
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Inicio</label>
+                        <input type="date" name="start_date"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Fin</label>
+                        <input type="date" name="end_date"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('newLinkedTaskModal').classList.add('hidden')"
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancelar</button>
+                <button type="submit"
+                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">Crear
+                    Tarea</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleEditMode() {
+        const fields = document.querySelectorAll('.editable-field');
+        const saveContainer = document.getElementById('saveBtnContainer');
+        const editBtn = document.getElementById('toggleEditBtn');
+
+        fields.forEach(field => {
+            field.disabled = false;
+            field.classList.remove('bg-transparent', 'border-none');
+            field.classList.add('bg-white', 'border', 'border-gray-300', 'rounded', 'px-2', 'py-1');
+        });
+
+        saveContainer.classList.remove('hidden');
+        editBtn.classList.add('hidden');
+    }
+
+    function cancelEditMode() {
+        // Recargar para descartar cambios
+        window.location.reload();
+    }
+</script>
 {% endblock %}

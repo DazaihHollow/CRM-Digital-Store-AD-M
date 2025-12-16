@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="px-4 py-8 sm:px-0 max-w-5xl mx-auto">
+    <div class="flex justify-between items-end mb-10">
+        <div>
+            <h1 class="text-4xl font-light text-slate-900 tracking-tight">Agenda</h1>
+            <p class="mt-2 text-slate-500 font-light">Tus próximas entregas y compromisos.</p>
+        </div>
+        <a href="/planning" class="text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors">Volver al
+            Kanban</a>
+    </div>
+
+    <!-- Minimalist Timeline -->
+    <div class="relative border-l border-slate-200 ml-3 space-y-12">
+        {% if tasks_with_dates %}
+        {% for task in tasks_with_dates|sort(attribute='end_date') %}
+        <div class="relative pl-8 group">
+            <!-- Dot -->
+            <div
+                class="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full border-2 border-white 
+                    {% if task.status == 'done' %}bg-emerald-400 ring-2 ring-emerald-100{% else %}bg-blue-500 ring-2 ring-blue-100{% endif %}">
+            </div>
+
+            <!-- Content Card -->
+            <div
+                class="flex flex-col sm:flex-row sm:items-start sm:justify-between bg-white p-6 rounded-xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-lg transition-shadow duration-300 border border-slate-100">
+                <div class="flex-1">
+                    <div class="flex items-center space-x-3 mb-2">
+                        <span class="text-xs font-semibold tracking-wider uppercase text-slate-400">
+                            {{ task.end_date.strftime('%d %b') }}
+                        </span>
+                        {% if task.status == 'done' %}
+                        <span
+                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700">Completado</span>
+                        {% elif task.status == 'in_progress' %}
+                        <span
+                            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">En
+                            Curso</span>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="text-xl font-medium text-slate-800 mb-1 group-hover:text-blue-600 transition-colors">
+                        {{ task.title }}
+                    </h3>
+
+                    {% if task.description %}
+                    <p class="text-slate-500 text-sm leading-relaxed mb-3 max-w-2xl">
+                        {{ task.description }}
+                    </p>
+                    {% endif %}
+
+                    <div class="flex items-center space-x-4 mt-4">
+                        {% if task.prospect %}
+                        <div class="flex items-center text-xs text-slate-500">
+                            <span class="w-2 h-2 rounded-full bg-indigo-400 mr-2"></span>
+                            {{ task.prospect.name }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Avatars -->
+                        {% if task.assignees %}
+                        <div class="flex -space-x-2">
+                            {% for user in task.assignees %}
+                            <div class="h-6 w-6 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[9px] font-bold text-slate-600"
+                                title="{{ user.username }}">
+                                {{ user.username[0]|upper }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Action (Optional) -->
+                <!-- <div class="mt-4 sm:mt-0 sm:ml-4 text-right">
+                        <a href="#" class="text-sm text-slate-300 hover:text-slate-500">Ver &rarr;</a>
+                    </div> -->
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-20">
+            <p class="text-slate-400 font-light text-lg">No hay eventos programados.</p>
+            <a href="/planning" class="text-blue-500 hover:text-blue-700 text-sm mt-2 inline-block font-medium">Crear
+                tarea con fecha</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

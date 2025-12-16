@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8 sm:px-0">
+    <!-- Encabezado de Perfil -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+        <div class="px-4 py-5 sm:px-6 flex items-center justify-between">
+            <div class="flex items-center">
+                <div
+                    class="h-20 w-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-3xl font-bold">
+                    {{ user.username[0] | upper }}
+                </div>
+                <div class="ml-6">
+                    <h3 class="text-2xl leading-6 font-bold text-gray-900">{{ user.username }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ user.email or 'Sin correo registrado' }}</p>
+                    <span
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">
+                        Activo
+                    </span>
+                </div>
+            </div>
+            <!-- Botón Editar (Placeholder para futura implementación si se desea) -->
+            <!-- <button class="text-sm text-blue-600 hover:text-blue-900 border border-blue-600 rounded px-3 py-1">Editar Perfil</button> -->
+        </div>
+    </div>
+
+    <!-- Tareas Asignadas -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Mis Tareas Asignadas</h3>
+            <p class="mt-1 text-sm text-gray-500">Resumen de responsabilidades pendientes.</p>
+        </div>
+        <div class="p-4 bg-slate-50 min-h-[200px]">
+            {% if tasks %}
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {% for task in tasks %}
+                {% with redirect_mode=True %}
+                {% include 'components/task_card.html' %}
+                {% endwith %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-10">
+                <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">Sin tareas asignadas</h3>
+                <p class="mt-1 text-sm text-gray-500">¡Buen trabajo! No tienes pendientes.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Personal Kanban (Subtareas) -->
+    <div class="mt-8">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-900">Mi Espacio Personal</h3>
+            <button onclick="document.getElementById('newSubTaskModal').classList.remove('hidden')"
+                class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                + Nueva Subtarea
+            </button>
+        </div>
+
+        <div class="flex space-x-4 overflow-x-auto pb-4">
+            <!-- Columna TODO -->
+            <div class="flex-1 min-w-[250px] bg-slate-100 rounded-lg p-3 border border-slate-200">
+                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Por Hacer</h4>
+                <div class="space-y-2">
+                    {% for sub in subtasks if sub.status == 'todo' %}
+                    {% include 'components/subtask_card.html' %}
+                    {% else %}
+                    <p class="text-xs text-slate-400 italic text-center">Vacío</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Columna DOING -->
+            <div class="flex-1 min-w-[250px] bg-indigo-50 rounded-lg p-3 border border-indigo-100">
+                <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-3">En Marcha</h4>
+                <div class="space-y-2">
+                    {% for sub in subtasks if sub.status == 'in_progress' %}
+                    {% include 'components/subtask_card.html' %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Columna DONE -->
+            <div class="flex-1 min-w-[250px] bg-emerald-50 rounded-lg p-3 border border-emerald-100">
+                <h4 class="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-3">Listo</h4>
+                <div class="space-y-2">
+                    {% for sub in subtasks if sub.status == 'done' %}
+                    {% include 'components/subtask_card.html' %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Subtarea -->
+<div id="newSubTaskModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-sm">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Nueva Subtarea Personal</h3>
+        <form action="/subtasks/create" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Título</label>
+                    <input type="text" name="title" required
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Vincular a Tarea Padre</label>
+                    <select name="task_id" required
+                        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        {% for task in tasks %}
+                        <option value="{{ task.id }}">{{ task.title }}</option>
+                        {% else %}
+                        <option value="" disabled selected>No tienes tareas asignadas</option>
+                        {% endfor %}
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Solo puedes crear subtareas de tareas asignadas a ti.</p>
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('newSubTaskModal').classList.add('hidden')"
+                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancelar</button>
+                <button type="submit"
+                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">Crear</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
