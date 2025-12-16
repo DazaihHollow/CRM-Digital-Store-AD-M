@@ -13,32 +13,34 @@ from database import engine, get_db
 # NOTA: En producción usar Alembic.
 # IMPORTANTE: Ya NO borramos los datos al iniciar.
 # models.Base.metadata.drop_all(bind=engine)
-try:
-    print("INFO: Attempting to create tables...")
-    models.Base.metadata.create_all(bind=engine)
-    print("INFO: Tables created successfully.")
-except Exception as e:
-    print(f"CRITICAL ERROR: Failed to create tables. {e}")
-    # No re-lanzamos el error para permitir que la app intente iniciar y muestre logs
-
-
 app = FastAPI(title="CRM Agencia")
 
-# Manejador de errores para redirigir a login en lugar de mostrar JSON
-from fastapi.exceptions import HTTPException
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    if exc.status_code == status.HTTP_401_UNAUTHORIZED:
-        return RedirectResponse(url="/login", status_code=303)
-    return HTMLResponse(content=f"<h1>Error {exc.status_code}</h1><p>{exc.detail}</p>", status_code=exc.status_code)
+@app.on_event("startup")
+async def startup_event():
+    # Inicialización de tablas en tiempo de ejecución para capturar logs correctamente
+    try:
+        print("INFO: Attempting to create tables...")
+        models.Base.metadata.create_all(bind=engine)
+        print("INFO: Tables created successfully.")
+    except Exception as e:
+        print(f"CRITICAL ERROR: Failed to create tables. {e}")
 
 # Configuración de rutas
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
 STATIC_DIR = BASE_DIR / "static"
 
-STATIC_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+# Crear directorio static si no existe (para evitar crash en local) y montar solo si existe
+if not STATIC_DIR.exists():
+    try:
+        STATIC_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        print(f"WARNING: Could not create static directory (Read-Only FS?): {e}")
+
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+else:
+    print("WARNING: Static directory not found, skipping mount.")
 
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
